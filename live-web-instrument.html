@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+   <meta charset="utf-8">
+<link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/9wAA7usAAFVRAAC7uwAA//cAAPrfAAD63wAA+t8AAPjfAAD7jwAA+98AAPvfAAD71wAA++8AAP//AAD//wAA" rel="icon" type="image/x-icon">   
+   <title>Live Web Instrument</title>    
+   <script src="https://cdn.jsdelivr.net/npm/p5@1.7.0/lib/p5.js"></script>
+</head>
+<body> 
+<div id = "control-scroll">
+    <h1>CONTROL</h1>
+    <main></main>
+    <table id = "inputtable">
+        <tr>
+            <td>Pump Frquency [GHz]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+        <tr>
+            <td>Pump Power [dBm]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+        <tr>
+            <td>DC Bias [V]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+        
+        <tr>
+            <td>Sweep Start Frequency [GHz]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+        <tr>
+            <td>Sweep Stop Frequency [GHz]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+        <tr>
+            <td>Sweep Number of Points:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+        <tr>
+            <td>VNA IFBW [Hz]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+        <tr>
+            <td>VNA Power [dBm]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+
+        <tr>
+            <td>SPA RBW [Hz]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+        <tr>
+            <td>SPA VBW [Hz]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>
+        <tr>
+            <td>Programmable Attenuator Value[dB]:</td>
+            <td>
+                <input>
+            </td>
+        </tr>        
+    </table>
+    <span id = "pump-status-span"></span>
+    <span id = "dc-bias-status-span"></span>
+    <span id = "warm-switch-state-span"></span>
+    <span id = "cold-switch-state-span"></span>
+
+    <table id = "on-off-table">
+        <tr>
+            <td>pump on/off</td>
+            <td>flux bias on/off</td>
+        </tr>
+    </table>    
+    <table id = "warm-switch-select-table">
+        <tr>
+            <td>s11</td>
+            <td>s21</td>
+            <td>s12</td>
+            <td>s22</td>
+            <td>noise</td>
+            <td>diode</td>
+        </tr>
+    </table>
+
+    <table id = "cold-switch-select-table">
+        <tr>
+            <td>short</td>
+            <td>open</td>
+            <td>load</td>
+            <td>port 1</td>
+            <td>port 2</td>
+            <td>port 3</td>
+            <td>port 4</td>
+            <td>port 5</td>
+            <td>port 6</td>
+        </tr>
+    </table>
+</div>
+<div id = "data-scroll">
+    <h1>DATA</h1>
+    <h2>Live Plot</h2>
+    <div style="display:none" id="status">Status: Idle</div>
+    <img id ="live-trace">
+    <div id = "save-trace-button">SAVE PLOT</div>
+    <div id = "plots-scroll"></div>
+</div>
+<script>
+let vnaImg = null;       // Will hold the processed p5.Image object
+let isFetching = false;  // Your guard flag defined in the fetch function
+
+liveWebInstrument = {};
+function savejson(){
+    var httpc = new XMLHttpRequest();
+    httpc.open("POST", "save-file.php", true);
+    httpc.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    httpc.send("data="+encodeURIComponent(JSON.stringify(liveWebInstrument,null,"    "))+"&filename=live-web-instrument.json");//send text to save-file.php    
+}
+
+inputs = document.getElementById("inputtable").getElementsByTagName("INPUT");
+
+function setup() {
+    inputs = document.getElementById("inputtable").getElementsByTagName("INPUT");
+
+    control_canvas_width = 0.48*innerWidth;
+    cellsize = control_canvas_width/12;
+    createCanvas(12*cellsize,3*cellsize);  
+    frameRate(10);
+    var httpc = new XMLHttpRequest();
+    httpc.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            liveWebInstrument = JSON.parse(this.responseText);
+            pump_frequency = liveWebInstrument.pump_frequency; // GHz
+            pump_power = liveWebInstrument.pump_power;    // dBm
+            dc_bias = liveWebInstrument.dc_bias;       // V
+            inputs[0].value = liveWebInstrument.pump_frequency.toString();
+            inputs[1].value = liveWebInstrument.pump_power.toString();
+            inputs[2].value = liveWebInstrument.dc_bias.toString();
+            inputs[3].value = liveWebInstrument.fstart.toString();
+            inputs[4].value = liveWebInstrument.fstop.toString();
+            inputs[5].value = liveWebInstrument.numpoints.toString();
+            inputs[6].value = liveWebInstrument.vna_ifbw.toString();
+            inputs[7].value = liveWebInstrument.vna_power.toString();
+            inputs[8].value = liveWebInstrument.spa_rbw.toString();
+            inputs[9].value = liveWebInstrument.spa_vbw.toString();
+            inputs[10].value = liveWebInstrument.programmable_attenuator_value.toString();
+            if(liveWebInstrument.pump_on){
+                document.getElementById("pump-status-span").innerHTML = "PUMP ON, ";
+            }
+            else{
+                document.getElementById("pump-status-span").innerHTML = "PUMP OFF, ";
+            }
+            if(liveWebInstrument.dc_source_on){
+                document.getElementById("dc-bias-status-span").innerHTML = "DC BIAS ON, ";
+            }
+            else{
+                document.getElementById("dc-bias-status-span").innerHTML = "DC BIAS OFF, ";
+            } 
+            document.getElementById("warm-switch-state-span").innerHTML = liveWebInstrument.warm_switch_state + ", ";
+            document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+        }
+    };
+    httpc.open("GET", "load-file.php?filename=live-web-instrument.json", true);
+    httpc.send();
+}
+
+function draw(){
+    background(255);
+    xcellindex = Math.floor(mouseX/cellsize);
+    ycellindex = Math.floor(mouseY/cellsize);
+    if(xcellindex >= 4 && xcellindex <= 8){
+        fill("#a0a0a0");
+        rect(xcellindex*cellsize,ycellindex*cellsize,cellsize,cellsize);
+    }
+
+    noFill();
+    stroke(0);
+    strokeWeight(3);  
+    line(0,cellsize,width,cellsize);
+    line(0,2*cellsize,width,2*cellsize);
+    strokeWeight(1);  
+    for(var xindex = 4; xindex < 9; xindex++){
+        for(var yindex = 0; yindex < 3; yindex++){
+           // rect(xindex*cellsize,yindex*cellsize,cellsize,cellsize);
+        }
+    }
+    fill(0);
+    strokeWeight(1);
+    textSize(cellsize);
+
+    text("freq = ",0.1*cellsize,cellsize-10);
+
+    text((Math.abs(Math.trunc(pump_frequency / 10)) % 10).toString(),4*cellsize + 15,cellsize-10);
+    text((Math.abs(Math.trunc(pump_frequency)) % 10).toString(),5*cellsize + 15,cellsize-10);
+    text(".",5.6*cellsize + 15,cellsize-10);
+    text((Math.abs(Math.trunc(pump_frequency * 10)) % 10).toString(),6*cellsize + 15,cellsize-10);
+    text((Math.abs(Math.trunc(pump_frequency * 100)) % 10).toString(),7*cellsize + 15,cellsize-10);
+    text((Math.abs(Math.trunc(pump_frequency * 1000)) % 10).toString(),8*cellsize + 15,cellsize-10);
+    text("GHz",9*cellsize + 15,cellsize-10);
+
+    text("pwr = ",0.1*cellsize,2*cellsize-10);
+
+    if(Math.sign(pump_power) < 0 ){
+        text("-",3.3*cellsize + 15,2*cellsize-10);
+    }
+    text((Math.abs(Math.trunc(pump_power / 10)) % 10).toString(),4*cellsize + 15,2*cellsize-10);
+    text((Math.abs(Math.trunc(pump_power)) % 10).toString(),5*cellsize + 15,2*cellsize-10);
+    text(".",5.6*cellsize + 15,2*cellsize-10);
+    text((Math.abs(Math.trunc(pump_power * 10)) % 10).toString(),6*cellsize + 15,2*cellsize-10);
+    text((Math.abs(Math.trunc(pump_power * 100)) % 10).toString(),7*cellsize + 15,2*cellsize-10);
+    text((Math.abs(Math.trunc(pump_power * 1000)) % 10).toString(),8*cellsize + 15,2*cellsize-10);
+    text("dBm",9*cellsize + 15,2*cellsize-10);
+    
+    
+    text("bias = ",0.1*cellsize,3*cellsize-10);
+    if(Math.sign(dc_bias) < 0 ){
+        text("-",3.3*cellsize + 15,3*cellsize-10);
+    }
+    else{
+        text("+",3.3*cellsize + 15,3*cellsize-10);
+    }
+    text((Math.abs(Math.trunc(dc_bias / 10)) % 10).toString(),4*cellsize + 15,3*cellsize-10);
+    text((Math.abs(Math.trunc(dc_bias)) % 10).toString(),5*cellsize + 15,3*cellsize-10);
+    text(".",5.6*cellsize + 15,3*cellsize-10);
+    text((Math.abs(Math.trunc(dc_bias * 10)) % 10).toString(),6*cellsize + 15,3*cellsize-10);
+    text((Math.abs(Math.trunc(dc_bias * 100)) % 10).toString(),7*cellsize + 15,3*cellsize-10);
+    text((Math.abs(Math.trunc(dc_bias * 1000)) % 10).toString(),8*cellsize + 15,3*cellsize-10);
+    text("V",9*cellsize + 15,3*cellsize-10);
+    pump_frequency = Math.round(pump_frequency*1000)/1000; 
+    pump_power = Math.round(pump_power*1000)/1000; 
+    dc_bias = Math.round(dc_bias*1000)/1000; 
+    
+    if(liveWebInstrument.pump_frequency != pump_frequency || liveWebInstrument.pump_power != pump_power || liveWebInstrument.dc_bias != dc_bias){
+            liveWebInstrument.pump_frequency = pump_frequency;
+            liveWebInstrument.pump_power = pump_power;
+            liveWebInstrument.dc_bias = dc_bias;
+            inputs[0].value = liveWebInstrument.pump_frequency.toString();
+            inputs[1].value = liveWebInstrument.pump_power.toString();
+            inputs[2].value = liveWebInstrument.dc_bias.toString();
+            savejson();
+    }
+
+    if (!isFetching) {
+        fetchSingleFrame();
+    }
+    
+}
+
+
+inputs[0].onchange = function(){
+    liveWebInstrument.pump_frequency = parseFloat(this.value);
+    savejson();
+    pump_frequency = liveWebInstrument.pump_frequency; 
+}
+inputs[1].onchange = function(){
+    liveWebInstrument.pump_power = parseFloat(this.value);
+    savejson();
+    pump_power = liveWebInstrument.pump_power; 
+}
+inputs[2].onchange = function(){
+    liveWebInstrument.dc_bias = parseFloat(this.value);
+    savejson();
+    dc_bias = liveWebInstrument.dc_bias; 
+}
+inputs[3].onchange = function(){
+    liveWebInstrument.fstart = parseFloat(this.value);
+    savejson();
+}
+inputs[4].onchange = function(){
+    liveWebInstrument.fstop = parseFloat(this.value);
+    savejson();
+}
+inputs[5].onchange = function(){
+    liveWebInstrument.numpoints = parseFloat(this.value);
+    savejson();
+}
+inputs[6].onchange = function(){
+    liveWebInstrument.vna_ifbw = parseFloat(this.value);
+    savejson();
+}
+inputs[7].onchange = function(){
+    liveWebInstrument.vna_power = parseFloat(this.value);
+    savejson();
+}
+
+function mouseWheel(event) {
+    if(xcellindex == 5 && ycellindex == 0){
+        if(event.delta > 0){ //mouse wheel down
+            pump_frequency -= 1;
+        }
+        else{
+            pump_frequency += 1;
+        }
+    }
+    if(xcellindex == 6 && ycellindex == 0){
+        if(event.delta > 0){ //mouse wheel down
+            pump_frequency -= 0.1;
+        }
+        else{
+            pump_frequency += 0.1;
+        }
+    }
+    if(xcellindex == 7 && ycellindex == 0){
+        if(event.delta > 0){ //mouse wheel down
+            pump_frequency -= 0.01;
+        }
+        else{
+            pump_frequency += 0.01;
+        }
+    }
+     if(xcellindex == 8 && ycellindex == 0){
+        if(event.delta > 0){ //mouse wheel down
+            pump_frequency -= 0.001;
+        }
+        else{
+            pump_frequency += 0.001;
+        }
+    }   
+    
+    if(xcellindex == 5 && ycellindex == 1){
+        if(event.delta > 0){ //mouse wheel down
+            pump_power -= 1;
+        }
+        else{
+            pump_power += 1;
+        }
+    }
+    if(xcellindex == 6 && ycellindex == 1){
+        if(event.delta > 0){ //mouse wheel down
+            pump_power -= 0.1;
+        }
+        else{
+            pump_power += 0.1;
+        }
+    }
+    if(xcellindex == 7 && ycellindex == 1){
+        if(event.delta > 0){ //mouse wheel down
+            pump_power -= 0.01;
+        }
+        else{
+            pump_power += 0.01;
+        }
+    }
+     if(xcellindex == 8 && ycellindex == 1){
+        if(event.delta > 0){ //mouse wheel down
+            pump_power -= 0.001;
+        }
+        else{
+            pump_power += 0.001;
+        }
+    }   
+    
+    
+    if(xcellindex == 5 && ycellindex == 2){
+        if(event.delta > 0){ //mouse wheel down
+            dc_bias -= 1;
+        }
+        else{
+            dc_bias += 1;
+        }
+    }
+    if(xcellindex == 6 && ycellindex == 2){
+        if(event.delta > 0){ //mouse wheel down
+            dc_bias -= 0.1;
+        }
+        else{
+            dc_bias += 0.1;
+        }
+    }
+    if(xcellindex == 7 && ycellindex == 2){
+        if(event.delta > 0){ //mouse wheel down
+            dc_bias -= 0.01;
+        }
+        else{
+            dc_bias += 0.01;
+        }
+    }
+     if(xcellindex == 8 && ycellindex == 2){
+        if(event.delta > 0){ //mouse wheel down
+            dc_bias -= 0.001;
+        }
+        else{
+            dc_bias += 0.001;
+        }
+    }   
+}
+
+function fetchSingleFrame() {
+    isFetching = true;
+    const statusDiv = document.getElementById('status');
+    const plotImg = document.getElementById('live-trace');
+    
+    statusDiv.innerText = "Status: Fetching latest VNA sweep...";
+    statusDiv.style.color = "#ffcc00"; 
+
+    fetch('bridge.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(liveWebInstrument) 
+    })
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
+        return response.text(); 
+    })
+    .then(rawText => {
+        const cleanText = rawText.trim();
+        
+        if (cleanText && cleanText.startsWith('data:image/png;base64,')) {
+            plotImg.src = cleanText;
+            plotImg.style.display = "block";
+            statusDiv.innerText = "Status: Streaming Live...";
+            statusDiv.style.color = "#00ff96"; 
+        } else {
+            throw new Error("Invalid or empty image payload returned.");
+        }
+    })
+    .catch(error => {
+        console.error('Test pipeline error:', error);
+        statusDiv.innerText = `Status: Failed (${error.message})`;
+        statusDiv.style.color = "#ff3366"; 
+    })
+    .finally(() => {
+        // Release the guard so the p5 loop knows it can request the next frame
+        isFetching = false; 
+    });
+}
+
+
+</script>
+<style>
+body{
+    font-family:Arial;
+}
+main{
+    display:block;
+}
+main canvas{
+    display:block;
+    border:solid;
+    margin:auto;
+}
+#inputtable{
+    font-size:1em;
+}
+#inputtable input{
+}
+#warm-switch-select-table,
+#on-off-table,
+#cold-switch-select-table{
+    margin-top:1em;
+    border-collapse: separate; /* Required for spacing to work */
+    border-spacing: 0.5em 0;    /* Horizontal spacing, Vertical spacing */
+}
+
+#warm-switch-select-table td,
+#on-off-table td,
+#cold-switch-select-table td{
+    border:solid;
+    font-size:1.5em;
+    padding: 0.25em 0.25em 0.25em 0.25em;
+    border-radius:0.4em;
+    cursor:pointer;
+}
+#warm-switch-select-table td{
+    border-color:red;
+}
+#cold-switch-select-table td{
+    border-color:blue;
+}
+#warm-switch-select-table td:hover,
+#on-off-table td:hover,
+#cold-switch-select-table td:hover{
+    background-color:yellow;
+}
+#warm-switch-select-table td:active,
+#on-off-table td:active,
+#cold-switch-select-table td:active{
+    background-color:green;
+}
+#save-trace-button{
+    border:solid;
+    padding: 0.25em 0.25em 0.25em 0.25em;
+    width:10em;
+    text-align:center;
+    display:block;
+    margin:auto;
+    border-radius:0.5em;
+    cursor:pointer;
+    font-size:1.5em;
+}
+#save-trace-button:hover{
+    background-color:yellow;
+}
+#save-trace-button:active{
+    background-color:green;
+}
+
+#control-scroll{
+    position:absolute;
+    left:0px;
+    top:0px;
+    bottom:0px;
+    width:49%;
+    overflow:scroll;
+}
+#data-scroll{
+    position:absolute;
+    right:0px;
+    top:0px;
+    bottom:0px;
+    width:49%;
+    overflow:scroll;
+    border-left:solid;
+}
+#data-scroll img{
+    max-width:97%;
+    display:block;
+    margin:auto;
+}
+h1,h2,h3{
+    font-family:Arial;
+    text-align:center;
+}
+</style>
+</body>
+</html>
+
+
+    
+    

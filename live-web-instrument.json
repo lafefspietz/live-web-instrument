@@ -1,0 +1,23 @@
+{
+	"vna_id": "Rohde&Schwarz,ZVA24-2Port,1145111024100131,3.30",
+	"spa_id": "Hewlett-Packard, E7405A, SG45102671, A.14.04",
+	"dc_source_id": "Agilent Technologies,33220A,MY44053372,2.07-2.06-22-2",
+	"fstart": 6.0,
+	"fstop": 7.0,
+	"numpoints": 401,
+	"vna_ifbw": 1000.0,
+	"vna_power": -30.0,
+	"pump_on": false,
+	"pump_frequency": 13.0,
+	"pump_power": -30.0,
+	"dc_bias": 0.218,
+	"dc_source_on": true,
+	"spa_rbw": 1000000.0,
+	"spa_vbw": 1000000.0,
+	"spa_units": "DBM",
+	"programmable_attenuator_value": 20.0,
+	"mm4250_state": "o",
+	"warm_switch_state": "s11",
+	"save_next_trace": false,
+	"cold_switch_state": "open"
+}
