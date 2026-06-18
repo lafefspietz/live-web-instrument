@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+   <meta charset="utf-8">
+<link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/9wAA7usAAFVRAAC7uwAA//cAAPrfAAD63wAA+t8AAPjfAAD7jwAA+98AAPvfAAD71wAA++8AAP//AAD//wAA" rel="icon" type="image/x-icon">   
+   <title>files.md</title>    
+</head>
+<body> 
+    <h1>files.md</h1>
+    <pre id = "files-pre"></pre>
+<script>
+files = [];
+var httpf = new XMLHttpRequest();
+httpf.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+        files = JSON.parse(this.responseText);
+        filesmd = "# files.md\n\n";
+        filesmd += "\n## web files\n\n";
+        for(var index = 0;index < files.length;index++){
+            if(files[index].toLowerCase().endsWith(".html") || files[index].toLowerCase().endsWith(".js") || files[index].toLowerCase().endsWith(".css")){
+                filesmd += " - [" + files[index] + "](" + files[index] + ")\n";
+            }
+        }
+        filesmd += "\n## php files\n\n";
+        for(var index = 0;index < files.length;index++){
+            if(files[index].toLowerCase().endsWith(".php")){
+                filesmd += " - [" + files[index] + "](" + files[index] + ")\n";
+            }
+        }
+        filesmd += "\n## markdown files\n\n";
+        for(var index = 0;index < files.length;index++){
+            if(files[index].toLowerCase().endsWith(".md")){
+                filesmd += " - [" + files[index] + "](" + files[index] + ")\n";
+            }
+        }
+        filesmd += "\n## json files\n\n";
+        for(var index = 0;index < files.length;index++){
+            if(files[index].toLowerCase().endsWith(".json")){
+                filesmd += " - [" + files[index] + "](" + files[index] + ")\n";
+            }
+        }       
+        filesmd += "\n## python files\n\n";
+        for(var index = 0;index < files.length;index++){
+            if(files[index].toLowerCase().endsWith(".py") || files[index].toLowerCase().endsWith(".ipynb")){
+                filesmd += " - [" + files[index] + "](" + files[index] + ")\n";
+            }
+        }        
+        
+        document.getElementById("files-pre").innerHTML = filesmd;
+        var httpcm = new XMLHttpRequest();
+        httpcm.open("POST", "save-file.php", true);
+        httpcm.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+        httpcm.send("data=" + filesmd + "&filename=files.md");//send text to save-file.php
+
+    }
+};
+httpf.open("GET", "list-files.php", true);
+httpf.send();
+
+
+</script>
+<style>
+body{
+    font-family:Arial;
+}
+main{
+    display:block;
+}
+main canvas{
+    display:block;
+    border:solid;
+    margin:auto;
+}
+#inputtable{
+    font-size:1em;
+}
+#inputtable input{
+}
+#warm-switch-select-table,
+#on-off-table,
+#cold-switch-select-table{
+    margin-top:1em;
+    border-collapse: separate; /* Required for spacing to work */
+    border-spacing: 0.5em 0;    /* Horizontal spacing, Vertical spacing */
+}
+
+#warm-switch-select-table td,
+#on-off-table td,
+#cold-switch-select-table td{
+    border:solid;
+    font-size:1.5em;
+    padding: 0.25em 0.25em 0.25em 0.25em;
+    border-radius:0.4em;
+    cursor:pointer;
+}
+#warm-switch-select-table td{
+    border-color:red;
+}
+#cold-switch-select-table td{
+    border-color:blue;
+}
+#warm-switch-select-table td:hover,
+#on-off-table td:hover,
+#cold-switch-select-table td:hover{
+    background-color:yellow;
+}
+#warm-switch-select-table td:active,
+#on-off-table td:active,
+#cold-switch-select-table td:active{
+    background-color:green;
+}
+#save-trace-button{
+    border:solid;
+    padding: 0.25em 0.25em 0.25em 0.25em;
+    width:10em;
+    text-align:center;
+    display:block;
+    margin:auto;
+    border-radius:0.5em;
+    cursor:pointer;
+    font-size:1.5em;
+}
+#save-trace-button:hover{
+    background-color:yellow;
+}
+#save-trace-button:active{
+    background-color:green;
+}
+
+#control-scroll{
+    position:absolute;
+    left:0px;
+    top:0px;
+    bottom:0px;
+    width:49%;
+    overflow:scroll;
+}
+#data-scroll{
+    position:absolute;
+    right:0px;
+    top:0px;
+    bottom:0px;
+    width:49%;
+    overflow:scroll;
+    border-left:solid;
+}
+#data-scroll img{
+    max-width:97%;
+    display:block;
+    margin:auto;
+}
+h1,h2,h3{
+    font-family:Arial;
+    text-align:center;
+}
+</style>
+</body>
+</html>
+
+
+    
+    
