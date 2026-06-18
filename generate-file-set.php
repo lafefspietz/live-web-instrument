@@ -9,10 +9,9 @@ this program generates the file dna.txt which lists the files to replicate
 <?php
 
     $files = scandir(getcwd());
-
     $file_set =[];     
     foreach($files as $value){
-        if( substr($value,-5) == ".html" || substr($value,-5) == ".json" || substr($value,-4) == ".css" || substr($value,-3) == ".js" || substr($value,-3) == ".md" || substr($value,-4) == ".txt" || substr($value,-6) == ".ipynb" || substr($value,-4) == ".php"  || substr($value,-3) == ".py" || substr($value,-4) == ".s1p" || substr($value,-4) == ".s2p"){
+        if( substr($value,-5) == ".html" || substr($value,-5) == ".json" || substr($value,-4) == ".css" || substr($value,-3) == ".js" || substr($value,-3) == ".md" || substr($value,-4) == ".txt" || substr($value,-6) == ".ipynb" || substr($value,-4) == ".php"  || substr($value,-3) == ".py" || substr($value,-4) == ".s1p" || substr($value,-4) == ".s2p" || substr($value,-4) == ".bat" || substr($value,-3) == ".sh"){
             array_push($file_set,$value);
         }
     }

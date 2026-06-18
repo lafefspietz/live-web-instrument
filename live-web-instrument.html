@@ -107,12 +107,12 @@
             <td>short</td>
             <td>open</td>
             <td>load</td>
-            <td>port 1</td>
-            <td>port 2</td>
-            <td>port 3</td>
-            <td>port 4</td>
-            <td>port 5</td>
-            <td>port 6</td>
+            <td>port_1</td>
+            <td>port_2</td>
+            <td>port_3</td>
+            <td>port_4</td>
+            <td>port_5</td>
+            <td>port_6</td>
         </tr>
     </table>
 </div>
@@ -122,9 +122,12 @@
     <div style="display:none" id="status">Status: Idle</div>
     <img id ="live-trace">
     <div id = "save-trace-button">SAVE PLOT</div>
-    <div id = "plots-scroll"></div>
+    <div id = "plot-feed"></div>
 </div>
 <script>
+
+dataJSON = {}
+
 let vnaImg = null;       // Will hold the processed p5.Image object
 let isFetching = false;  // Your guard flag defined in the fetch function
 
@@ -302,6 +305,88 @@ inputs[7].onchange = function(){
     savejson();
 }
 
+warmSwitchButtons = document.getElementById("warm-switch-select-table").getElementsByTagName("TD");
+
+warmSwitchButtons[0].onclick = function(){
+    liveWebInstrument.warm_switch_state = this.innerHTML;
+    document.getElementById("warm-switch-state-span").innerHTML = liveWebInstrument.warm_switch_state + ", ";
+    savejson();
+}
+warmSwitchButtons[1].onclick = function(){
+    liveWebInstrument.warm_switch_state = this.innerHTML;
+    document.getElementById("warm-switch-state-span").innerHTML = liveWebInstrument.warm_switch_state + ", ";
+    savejson();
+}
+warmSwitchButtons[2].onclick = function(){
+    liveWebInstrument.warm_switch_state = this.innerHTML;
+    document.getElementById("warm-switch-state-span").innerHTML = liveWebInstrument.warm_switch_state + ", ";
+    savejson();
+}
+warmSwitchButtons[3].onclick = function(){
+    liveWebInstrument.warm_switch_state = this.innerHTML;
+    document.getElementById("warm-switch-state-span").innerHTML = liveWebInstrument.warm_switch_state + ", ";
+    savejson();
+}
+warmSwitchButtons[4].onclick = function(){
+    liveWebInstrument.warm_switch_state = this.innerHTML;
+    document.getElementById("warm-switch-state-span").innerHTML = liveWebInstrument.warm_switch_state + ", ";
+    savejson();
+}
+
+warmSwitchButtons[5].onclick = function(){
+    liveWebInstrument.warm_switch_state = this.innerHTML;
+    document.getElementById("warm-switch-state-span").innerHTML = liveWebInstrument.warm_switch_state + ", ";
+    savejson();
+}
+
+coldSwitchButtons = document.getElementById("cold-switch-select-table").getElementsByTagName("TD");
+
+coldSwitchButtons[0].onclick = function(){
+    liveWebInstrument.cold_switch_state = this.innerHTML;
+    document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+    savejson();
+}
+coldSwitchButtons[1].onclick = function(){
+    liveWebInstrument.cold_switch_state = this.innerHTML;
+    document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+    savejson();
+}
+coldSwitchButtons[2].onclick = function(){
+    liveWebInstrument.cold_switch_state = this.innerHTML;
+    document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+    savejson();
+}
+coldSwitchButtons[3].onclick = function(){
+    liveWebInstrument.cold_switch_state = this.innerHTML;
+    document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+    savejson();
+}
+coldSwitchButtons[4].onclick = function(){
+    liveWebInstrument.cold_switch_state = this.innerHTML;
+    document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+    savejson();
+}
+coldSwitchButtons[5].onclick = function(){
+    liveWebInstrument.cold_switch_state = this.innerHTML;
+    document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+    savejson();
+}
+coldSwitchButtons[6].onclick = function(){
+    liveWebInstrument.cold_switch_state = this.innerHTML;
+    document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+    savejson();
+}
+coldSwitchButtons[7].onclick = function(){
+    liveWebInstrument.cold_switch_state = this.innerHTML;
+    document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+    savejson();
+}
+coldSwitchButtons[8].onclick = function(){
+    liveWebInstrument.cold_switch_state = this.innerHTML;
+    document.getElementById("cold-switch-state-span").innerHTML = "cold switch = " + liveWebInstrument.cold_switch_state;
+    savejson();
+}
+
 function mouseWheel(event) {
     if(xcellindex == 5 && ycellindex == 0){
         if(event.delta > 0){ //mouse wheel down
@@ -424,14 +509,17 @@ function fetchSingleFrame() {
     .then(rawText => {
         const cleanText = rawText.trim();
         
-        if (cleanText && cleanText.startsWith('data:image/png;base64,')) {
-            plotImg.src = cleanText;
-            plotImg.style.display = "block";
-            statusDiv.innerText = "Status: Streaming Live...";
-            statusDiv.style.color = "#00ff96"; 
-        } else {
-            throw new Error("Invalid or empty image payload returned.");
-        }
+        try {
+            dataJSON = JSON.parse(cleanText);
+            if (dataJSON?.image?.startsWith('data:image/png;base64,')) {
+                plotImg.src = dataJSON.image;
+                plotImg.style.display = "block";
+                statusDiv.innerText = "Status: Streaming Live...";
+                statusDiv.style.color = "#00ff96";
+            } else throw new Error("Missing or invalid image data");
+        } catch { throw new Error("Bad or malformed JSON payload"); }
+        
+        
     })
     .catch(error => {
         console.error('Test pipeline error:', error);
@@ -445,6 +533,72 @@ function fetchSingleFrame() {
 }
 
 
+document.getElementById("save-trace-button").onclick = function(){
+    png64 = document.getElementById('live-trace').src;
+    var newimg = document.createElement("IMG");
+    document.getElementById("plot-feed").prepend(newimg);
+    newimg.src = png64;
+    var timestamp = Math.round((new Date().getTime())/1000).toString();
+    var httpc = new XMLHttpRequest();
+    var url = "save-png.php";        
+    httpc.open("POST", url, true);
+    httpc.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    httpc.send("data="+encodeURIComponent(png64.substring(22))+"&filename=plots/plot-" + timestamp +  ".png");//send text to filesaver.php
+    //drawplots();
+    
+    saveData = {};
+    saveData.xdata = dataJSON.xdata;
+    saveData.ydata = dataJSON.ydata;
+    saveData.timestamp = timestamp;
+    saveData.metadata = dataJSON.metadata;
+    saveData.xlabel = dataJSON.xlabel;
+    saveData.ylabel = dataJSON.ylabel;
+    saveData.ymin = dataJSON.ymin;
+    saveData.ymax = dataJSON.ymax;
+    
+    var httpcj = new XMLHttpRequest();
+    var url = "save-file.php";        
+    httpcj.open("POST", url, true);
+    httpcj.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+    httpcj.send("data=" + JSON.stringify(saveData) + "&filename=data/data-" + timestamp + ".json");//send text to save-file.php
+    
+}
+
+drawplots();
+
+function drawplots(){
+    plotfiles = [];
+    var httpcplots = new XMLHttpRequest();
+    httpcplots.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            plotfiles = JSON.parse(this.responseText);
+            plots_md = "# plots.md\n\n";
+            data_md = "# data.md\n\n";
+            
+            document.getElementById("plot-feed").innerHTML = "";
+            for(var index = plotfiles.length - 1;index >= 0;index--){
+                plots_md += "![](plots/" + plotfiles[index] + ")\n\n";
+                data_md += " - [data/data." + plotfiles[index].split("-")[1].split('.')[0] + ".json](data/data-" + plotfiles[index].split("-")[1].split('.')[0] + ".json)\n";
+                var newimg = document.createElement("IMG");
+                newimg.src = "plots/" + plotfiles[index];
+                document.getElementById("plot-feed").appendChild(newimg);
+            }
+            
+            var httpcp = new XMLHttpRequest();
+            httpcp.open("POST", "save-file.php", true);
+            httpcp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+            httpcp.send("data=" + plots_md + "&filename=plots.md");//send text to save-file.php
+
+            var httpcd = new XMLHttpRequest();
+            httpcd.open("POST", "save-file.php", true);
+            httpcd.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+            httpcd.send("data=" + data_md + "&filename=data.md");//send text to save-file.php
+
+        }
+    };
+    httpcplots.open("GET", "list-files.php?directoryname=plots", true);
+    httpcplots.send();
+}
 </script>
 <style>
 body{

@@ -80,7 +80,7 @@ httpc8.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
         scrolls = JSON.parse(this.responseText);
         for(var index = 0;index < scrolls.length;index++) {    
-            if(scrolls[index].substring(scrolls[index].length-5,scrolls[index].length) == ".html" || scrolls[index].substring(scrolls[index].length-4,scrolls[index].length) == ".txt" || scrolls[index].substring(scrolls[index].length-4,scrolls[index].length) == ".css" || scrolls[index].substring(scrolls[index].length-4,scrolls[index].length) == ".php" || scrolls[index].substring(scrolls[index].length-3,scrolls[index].length) == ".js" ||scrolls[index].substring(scrolls[index].length-3,scrolls[index].length) == ".py" || scrolls[index].substring(scrolls[index].length-3,scrolls[index].length) == ".md" ||    scrolls[index].substring(scrolls[index].length-5,scrolls[index].length) == ".json"){
+            if(scrolls[index].substring(scrolls[index].length-5,scrolls[index].length) == ".html" || scrolls[index].substring(scrolls[index].length-4,scrolls[index].length) == ".txt" || scrolls[index].substring(scrolls[index].length-4,scrolls[index].length) == ".css" || scrolls[index].substring(scrolls[index].length-4,scrolls[index].length) == ".php" || scrolls[index].substring(scrolls[index].length-3,scrolls[index].length) == ".js" ||scrolls[index].substring(scrolls[index].length-3,scrolls[index].length) == ".py" || scrolls[index].substring(scrolls[index].length-3,scrolls[index].length) == ".md" ||    scrolls[index].substring(scrolls[index].length-5,scrolls[index].length) == ".json"|| scrolls[index].substring(scrolls[index].length-4,scrolls[index].length) == ".bat"|| scrolls[index].substring(scrolls[index].length-3,scrolls[index].length) == ".sh"){
              
                 if(scrolls[index].substring(scrolls[index].length-5,scrolls[index].length) == ".html"){
                     var newa = document.createElement("A");
@@ -238,7 +238,12 @@ function setmode(){
     if(currentFile.substring(currentFile.length-5,currentFile.length) == ".json"){
         editor.getSession().setMode("ace/mode/json");
     }       
-    
+    if(currentFile.substring(currentFile.length-4,currentFile.length) == ".bat"){
+        editor.getSession().setMode("ace/mode/batchfile");
+    }    
+     if(currentFile.substring(currentFile.length-3,currentFile.length) == ".sh"){
+        editor.getSession().setMode("ace/mode/sh");
+    }    
 }
 
 codesquaresize = 120;
